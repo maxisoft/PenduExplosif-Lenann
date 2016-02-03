@@ -25,8 +25,6 @@ import android.view.MenuItem;
 import android.view.View;
 
 import java.io.Serializable;
-import java.util.Objects;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,15 +87,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i("bluetooth", String.format("recv from %s : %s", address, data));
                 if (data instanceof Ready) {
                     readyCount.getAndIncrement();
-                    if (isEveryBodyReady()) {
-                        mService.stopServer(); //on n'accepte plus d'autres connexions
-                        if (isLordOfTheRing()) {
-                            TreeSet<String> allDevice = new TreeSet<String>(devices);
-                            allDevice.add(mService.getMacAddress());
-                            //on initie la phase de validation du réseau.
-                            mService.send(nextDevice(), new InitToken(allDevice));
-                        }
-                    }
+                    checkReady();
                 } else if(data instanceof InitToken){
 
                     InitToken initToken = (InitToken) data;
@@ -114,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
                         //token a fait un tour et est valide donc Le réseau est bon
                         //on initie le jeu et on envoi un token avec un jeu
                         //TODO
+                        Log.i("c'est bon", "cool");
                     }else{
                         InitToken token;
                         //token invalide ou le noeud n'est pas le seigneur: envoi au suivant
@@ -151,8 +142,26 @@ public class MainActivity extends AppCompatActivity {
                     devices.remove(address);
                 }
                 mBinding.setDevices(devices);
+                if (devices.isEmpty()){
+                    mBinding.setReady(false);
+                    checkReady();
+                }
+
             }
         });
+    }
+
+    private void checkReady() {
+        if (isEveryBodyReady()) {
+            Log.i("Init Network", "Every Body Ready");
+            mService.stopServer(); //on n'accepte plus d'autres connexions
+            if (isLordOfTheRing()) {
+                TreeSet<String> allDevice = new TreeSet<String>(devices);
+                allDevice.add(mService.getMacAddress());
+                //on initie la phase de validation du réseau.
+                mService.send(nextDevice(), new InitToken(allDevice));
+            }
+        }
     }
 
     private boolean isLordOfTheRing() {
@@ -200,6 +209,7 @@ public class MainActivity extends AppCompatActivity {
             for (String address : mService.listConnectedDevices()) {
                 mService.send(address, new Ready());
             }
+            checkReady();
         }
     }
 }
