@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <import type="android.view.View"/>
+        <import type="java.util.Set"/>
+        <import type="android.dristributed.penduexplosif.MainActivity"/>
+        <variable
+            name="devices"
+            type="Set&lt;String>"/>
+        <variable
+            name="ready"
+            type="boolean"/>
+        <variable
+            name="handlers"
+            type="MainActivity.Handlers"/>
+    </data>
+    <android.support.design.widget.CoordinatorLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        tools:context="android.dristributed.penduexplosif.MainActivity">
+
+        <android.support.design.widget.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:theme="@style/AppTheme.AppBarOverlay">
+
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorPrimary"
+                app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+        </android.support.design.widget.AppBarLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recherche de pairs ..."
+                android:layout_gravity="center"
+                android:visibility='@{(devices.isEmpty()) ? View.VISIBLE : View.GONE, default=visible}'
+                android:layout_marginBottom="50dp" />
+            <ProgressBar
+                android:indeterminate="true"
+                android:id="@+id/marker_progress"
+                style="?android:attr/progressBarStyle"
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:visibility='@{(devices.isEmpty()) ? View.VISIBLE : View.GONE, default=visible}' />
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ready ?"
+                android:id="@+id/button"
+                android:layout_gravity="center"
+                android:visibility='@{(!devices.isEmpty() &amp;&amp; !ready) ? View.VISIBLE : View.GONE, default=gone}'
+                android:onClick="@{handlers.onClickReady}"/>
+        </FrameLayout>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/fab_margin"
+            android:src="@android:drawable/ic_dialog_email" />
+
+    </android.support.design.widget.CoordinatorLayout>
+</layout>
