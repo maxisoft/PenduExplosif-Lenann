@@ -105,8 +105,6 @@ public class EZBluetoothService extends Service {
             sendBroadcast(new Intent(ACTION_BLUETOOTH_DISABLED));
         }
 
-
-
         executor.scheduleWithFixedDelay(this::createNotification,
                 0,
                 500,
@@ -405,22 +403,42 @@ public class EZBluetoothService extends Service {
      */
     public class Binder extends android.os.Binder {
 
+        /**
+         * @return {@code true} si le péripherique Bluetooth est actif.
+         */
         public boolean isBluetoothEnabled() {
             return bluetoothAdapter != null && bluetoothAdapter.isEnabled();
         }
 
+        /**
+         * @return la liste des périphériques actuellement connectés
+         */
         public Iterable<String> listConnectedDevices() {
             return routingAlgo;
         }
 
+        /**
+         * Envoi de donnée
+         * @param macAddress l'addresse de destination
+         * @param data La donnée à envoyer
+         * @return le numero de sequence du packet.
+         */
         public short send(@NonNull String macAddress, Serializable data) {
             return EZBluetoothService.this.send(macAddress, data);
         }
 
+        /**
+         * Configuration du nombre maximal de connections
+         * @param maxConn
+         */
         public void setMaxBluetoothConnection(int maxConn) {
             EZBluetoothService.this.maxConn = Math.max(maxConn, MAX_BLUETOOTH_CONN);
         }
 
+        /**
+         * Lance la découverte de péripheriques
+         * @return {@code true} si la découverte est lancée
+         */
         public boolean startDiscovery() {
             stopDiscovering = false;
             if (bluetoothAdapter != null) {
@@ -430,6 +448,10 @@ public class EZBluetoothService extends Service {
             return false;
         }
 
+        /**
+         * Stoppe la découverte de périphériques
+         * @return {@code true} si la découverte est arreté
+         */
         public boolean stopDiscovery() {
             stopDiscovering = true;
             if (bluetoothAdapter != null) {
@@ -439,6 +461,10 @@ public class EZBluetoothService extends Service {
             return false;
         }
 
+        /**
+         * Retourne l'addresse mac du périphérique
+         * @return addresse mac du périphérique
+         */
         @Nullable
         public String getMacAddress() {
             if (bluetoothAdapter != null) {
@@ -447,15 +473,29 @@ public class EZBluetoothService extends Service {
             return null;
         }
 
+        /**
+         * @return {@code true} si le serveur est lancé
+         */
         public boolean serverRunning() {
             return serverMode && !serverExecutor.isTerminated();
         }
 
-        public void removeNotification() {
-            notificationEnabled = false;
-            notificationManager().cancel(ID_NOTIFICATION);
+        /**
+         * Lance le serveur
+         * @return {@code true} si le serveur est stoppé
+         */
+        public boolean startServer() {
+            if (!serverMode) {
+                EZBluetoothService.this.startServer();
+                serverMode = true;
+            }
+            return false;
         }
 
+        /**
+         * Arret du serveur.
+         * @return {@code true} si le serveur est stoppé
+         */
         public boolean stopServer() {
             if (serverMode) {
                 serverExecutor.shutdownNow();
@@ -465,18 +505,26 @@ public class EZBluetoothService extends Service {
             return false;
         }
 
-        public boolean startServer() {
-            if (!serverMode) {
-                EZBluetoothService.this.startServer();
-                serverMode = true;
-            }
-            return false;
+        /**
+         * Supprime la notification.
+         */
+        public void removeNotification() {
+            notificationEnabled = false;
+            notificationManager().cancel(ID_NOTIFICATION);
         }
 
+        /**
+         * Verifie l'existance d'une route vers l'adresse passée en paramètre.
+         * @param address
+         * @return {@code true} si la route existe
+         */
         public boolean hasRoute(@NonNull String address) {
             return routingAlgo != null && routingAlgo.hasRoute(address);
         }
 
+        /**
+         * @return La {@link BluetoothRoutingTable table de routage}
+         */
         @NonNull
         public BluetoothRoutingTable getRoutingTable() {
             if (routingAlgo == null || routingAlgo.getRoutingTable() == null) {

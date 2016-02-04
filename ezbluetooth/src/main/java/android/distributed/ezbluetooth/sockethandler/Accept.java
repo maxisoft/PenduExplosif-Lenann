@@ -9,6 +9,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.UUID;
 
+/**
+ * Server Runnable
+ */
 public class Accept implements Runnable {
     public static final String LOG_TAG = Accept.class.getSimpleName();
     private final EZBluetoothService service;

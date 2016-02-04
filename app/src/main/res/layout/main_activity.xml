@@ -5,27 +5,35 @@
         <import type="java.util.Set"/>
         <import type="android.dristributed.penduexplosif.MainActivity"/>
         <import type="android.dristributed.penduexplosif.model.Game"/>
+        <!--liste des pairs connectés-->
         <variable
             name="devices"
             type="Set&lt;String>"/>
+        <!--le terminal actuel est pret-->
         <variable
             name="ready"
             type="boolean"/>
+        <!--c'est notre tour-->
         <variable
             name="ourTurn"
             type="boolean"/>
+        <!--on est vainqueur-->
         <variable
             name="winner"
             type="boolean"/>
+        <!--on a perdu-->
         <variable
             name="looser"
             type="boolean"/>
+        <!--pour la gestions des clicks-->
         <variable
             name="handlers"
             type="MainActivity.Handlers"/>
+        <!--le jeu en cours-->
         <variable
             name="game"
             type="Game"/>
+        <!--le score-->
         <variable
             name="score"
             type="int"/>
@@ -56,7 +64,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <!-- WAITING 4 PEERS -->
+            <!-- message attente des pairs -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -78,6 +86,7 @@
                     android:layout_height="50dp" />
             </LinearLayout>
 
+            <!--les vies restantes-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -192,6 +201,7 @@
 
                     </LinearLayout>
 
+                    <!-- le mot à completer -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -201,6 +211,7 @@
                         android:layout_weight="1"
                         android:layout_gravity="center" />
 
+                    <!-- le score -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -212,6 +223,7 @@
                         android:layout_weight="1" />
                 </LinearLayout>
 
+                <!-- input pour la lettre que l'utilisateur doit rentrée -->
                 <EditText
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -223,6 +235,7 @@
                     android:maxLength="1"
                     android:visibility='@{(game.winner == null) ? View.VISIBLE : View.GONE, default=gone}'/>
 
+                <!-- affichage Manche gagnee/perdue -->
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -241,6 +254,7 @@
 
                 </FrameLayout>
 
+                <!-- liste des lettres déja entrées -->
                 <GridView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -251,7 +265,7 @@
 
             </LinearLayout>
 
-            <!-- READY -->
+            <!-- bouton pret -->
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

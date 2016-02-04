@@ -9,6 +9,9 @@ import android.util.Log;
 import java.io.IOException;
 import java.util.UUID;
 
+/**
+ * Initialize a connection to a device.
+ */
 public class Client implements Runnable {
     private final EZBluetoothService service;
     private final BluetoothDevice device;

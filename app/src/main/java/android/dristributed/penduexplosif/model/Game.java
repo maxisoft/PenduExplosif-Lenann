@@ -29,6 +29,11 @@ public class Game extends BaseObservable implements Serializable {
         return winner;
     }
 
+    public void setWinner(@Nullable String winner) {
+        this.winner = winner;
+        notifyPropertyChanged(BR.winner);
+    }
+
     @Bindable
     public int getHearth() {
         return hearth;
@@ -37,11 +42,6 @@ public class Game extends BaseObservable implements Serializable {
     public void setHearth(int hearth) {
         this.hearth = hearth;
         notifyPropertyChanged(BR.hearth);
-    }
-
-    public void setWinner(@Nullable String winner) {
-        this.winner = winner;
-        notifyPropertyChanged(BR.winner);
     }
 
     public ObservableArrayList<String> getAnswers() {
@@ -61,7 +61,7 @@ public class Game extends BaseObservable implements Serializable {
 
     public boolean answerFound() {
         for (int i = 0; i < word.length(); i++) {
-            if (!answerAlreadyPresent("" + word.charAt(i))){
+            if (!answerAlreadyPresent("" + word.charAt(i))) {
                 return false;
             }
         }
@@ -82,7 +82,7 @@ public class Game extends BaseObservable implements Serializable {
         String ret = "";
         for (int i = 0; i < word.length(); i++) {
             ret += " ";
-            ret += answerAlreadyPresent(""+word.charAt(i)) ? word.charAt(i) : "_";
+            ret += answerAlreadyPresent("" + word.charAt(i)) ? word.charAt(i) : "_";
         }
         return ret.trim();
     }

@@ -40,18 +40,19 @@ public class MainActivity extends AppCompatActivity {
 
     private final SortedSet<String> devices = new TreeSet<>();
     private final AtomicInteger readyCount = new AtomicInteger();
+    ArrayAdapter<String> itemsAdapter;
     private EZBluetoothService.Binder mService;
     private MainActivityBinding mBinding;
     private EditText editText;
     private GridView gridView;
-    ArrayAdapter<String> itemsAdapter;
-
     private Game game;
 
     private ServiceConnection mConnexion = new ServiceConnection() {
 
         public void onServiceConnected(ComponentName className, IBinder service) {
+            //lorsque le service se lance, on enregistre son interface dans un champ
             mService = (EZBluetoothService.Binder) service;
+            // et on lance la découverte réseau.
             mService.startDiscovery();
         }
 
@@ -67,12 +68,15 @@ public class MainActivity extends AppCompatActivity {
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity);
         mBinding.setHandlers(new Handlers());
         mBinding.setDevices(devices);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        editText = (EditText) findViewById(R.id.editText);
+
         gridView = (GridView) findViewById(R.id.gridView);
         itemsAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
         gridView.setAdapter(itemsAdapter);
+
+        editText = (EditText) findViewById(R.id.editText);
         editText.setText("");
         editText.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -87,67 +91,118 @@ public class MainActivity extends AppCompatActivity {
         editText.addTextChangedListener(new TextValidator(editText) {
             @Override
             public void validate(TextView textView, String text) {
-                if (text == null || text.isEmpty()){
+                if (text == null || text.isEmpty()) {
                     textView.setError(null);
-                }
-                else if (!isValidAnswer(text.toLowerCase())){
+                } else if (!isValidAnswer(text.toLowerCase())) {
                     textView.setError("Mauvais format de réponse");
-                }else if (answerAlreadyPresent(text.toLowerCase())){
+                } else if (answerAlreadyPresent(text.toLowerCase())) {
                     textView.setError("Réponse déjà donnée");
-                }
-                else{
+                } else {
                     textView.setError(null);
                 }
             }
         });
 
-            Intent intent = new Intent(this, EZBluetoothService.class);
+        // creation du service
+        Intent intent = new Intent(this, EZBluetoothService.class);
+        bindService(intent, mConnexion, Context.BIND_AUTO_CREATE);
 
-            bindService(intent, mConnexion, Context.BIND_AUTO_CREATE);
+        // enregistrement d'un listener pour la gestion des périphériques et les nouveaux messages.
+        RegisterListener.register(this, new
+                        EZBluetoothListener() {
+                            @Override
+                            public void onRecv(@NonNull String address, Serializable data) {
+                                Log.i("bluetooth", String.format("recv from %s : %s", address, data));
+                                boolean handled =
+                                        initNetworkRecvHandler(data)
+                                                || gameRecvHandler(data);
+                            }
 
-            RegisterListener.register(this,new
+                            @Override
+                            public void onNewPeer(@NonNull String address) {
+                                Log.i("bluetooth", String.format("onNewPeer: %s", address));
+                                synchronized (devices) {
+                                    devices.add(address);
+                                }
+                                mBinding.setDevices(devices);
+                                if (mBinding.getReady()) {
+                                    mService.send(address, new Ready());
+                                }
+                            }
 
-            EZBluetoothListener() {
-                @Override
-                public void onRecv (@NonNull String address, Serializable data){
-                    Log.i("bluetooth", String.format("recv from %s : %s", address, data));
-                    boolean handled =
-                            initNetworkRecvHandler(data)
-                                    || gameRecvHandler(data);
-                }
+                            @Override
+                            public void onPeerDisconnected(@NonNull String address) {
+                                Log.i("bluetooth", String.format("onPeerDisconnected: %s", address));
+                                synchronized (devices) {
+                                    devices.remove(address);
+                                }
+                                mBinding.setDevices(devices);
+                                if (devices.isEmpty()) {
+                                    mBinding.setReady(false);
+                                    checkReady();
+                                    game = null;
+                                    mBinding.setGame(game);
+                                    refreshAnswersList();
+                                }
+                            }
+                        }
 
-                @Override
-                public void onNewPeer (@NonNull String address){
-                    Log.i("bluetooth", String.format("onNewPeer: %s", address));
-                    synchronized (devices) {
-                        devices.add(address);
-                    }
-                    mBinding.setDevices(devices);
-                    if (mBinding.getReady()) {
-                        mService.send(address, new Ready());
-                    }
-                }
+        );
+    }
 
-                @Override
-                public void onPeerDisconnected (@NonNull String address){
-                    Log.i("bluetooth", String.format("onPeerDisconnected: %s", address));
-                    synchronized (devices) {
-                        devices.remove(address);
-                    }
-                    mBinding.setDevices(devices);
-                    if (devices.isEmpty()) {
-                        mBinding.setReady(false);
-                        checkReady();
-                        game = null;
-                        mBinding.setGame(game);
-                        refreshAnswersList();
-                    }
-                }
+    /**
+     * Gestion de l'initialisation du réseau en anneau.
+     * @param data
+     * @return
+     */
+    private boolean initNetworkRecvHandler(Serializable data) {
+        if (data instanceof Ready) {
+            readyCount.getAndIncrement();
+            checkReady();
+            return true;
+        } else if (data instanceof InitToken) {
+
+            InitToken initToken = (InitToken) data;
+            TreeSet<String> otherDevices = initToken.getDevices();
+            if (otherDevices.size() != devices.size() + 1
+                    || !otherDevices.contains(mService.getMacAddress())
+                    || !otherDevices.containsAll(devices)) {
+                //pas les mêmes devices.
+                initToken.setValid(false);
             }
 
-            );
-        }
+            boolean imLord = isLordOfTheRing();
+            if (initToken.isValid() && imLord) {
+                //token a fait un tour et est valide donc Le réseau est bon
+                //on initie le jeu et on envoi un token avec un jeu
+                game = new Game(RandomWord.randomWord());
+                mService.send(nextDevice(), new GameToken(game));
+                mBinding.setGame(game);
+                refreshAnswersList();
+            } else {
+                InitToken token;
+                //token invalide ou le noeud n'est pas le seigneur: envoi au suivant
+                if (imLord && game == null) { //on reconstruit le jeton
+                    TreeSet<String> allDevice = new TreeSet<String>(devices);
+                    allDevice.add(mService.getMacAddress());
+                    token = new InitToken(allDevice);
+                    token.setValid(true);
+                } else {
+                    token = initToken;
+                }
 
+                mService.send(nextDevice(), token);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Gestion de la logique du jeu
+     * @param data
+     * @return
+     */
     private boolean gameRecvHandler(Serializable data) {
         if (data instanceof GameToken) {
             GameToken token = (GameToken) data;
@@ -157,18 +212,18 @@ public class MainActivity extends AppCompatActivity {
             mBinding.setLooser(game.getHearth() == 0);
             refreshAnswersList();
             if (game.getWinner() != null) {
-                if (game.getWinner().equals(mService.getMacAddress())){
+                if (game.getWinner().equals(mService.getMacAddress())) {
                     //le jeton a fait un tour pour signaler le joueur gagnant.
                     //dans 5 sec on relance un nouveau jeu
                     startNewGameIn5Sec();
 
                     return true;
-                }else {
+                } else {
                     // envoi du token au suivant pour faire suivre l'information du gagnant
                     mService.send(nextDevice(), token);
                     return true;
                 }
-            }else if (game.getHearth() <= 0) {
+            } else if (game.getHearth() <= 0) {
                 startNewGameIn5Sec();
                 return true;
             }
@@ -198,50 +253,6 @@ public class MainActivity extends AppCompatActivity {
                 mService.send(nextDevice(), new GameToken(game));
             }
         }, 5_000);
-    }
-
-    private boolean initNetworkRecvHandler(Serializable data) {
-        if (data instanceof Ready) {
-            readyCount.getAndIncrement();
-            checkReady();
-            return true;
-        } else if (data instanceof InitToken){
-
-            InitToken initToken = (InitToken) data;
-            TreeSet<String> otherDevices = initToken.getDevices();
-            if (otherDevices.size() != devices.size() + 1
-                    || !otherDevices.contains(mService.getMacAddress())
-                    || !otherDevices.containsAll(devices)){
-                //pas les mêmes devices.
-                initToken.setValid(false);
-            }
-
-            boolean imLord = isLordOfTheRing();
-            if (initToken.isValid() && imLord){
-                //token a fait un tour et est valide donc Le réseau est bon
-                //on initie le jeu et on envoi un token avec un jeu
-                //TODO
-                game = new Game(RandomWord.randomWord());
-                mService.send(nextDevice(), new GameToken(game));
-                mBinding.setGame(game);
-                refreshAnswersList();
-            }else{
-                InitToken token;
-                //token invalide ou le noeud n'est pas le seigneur: envoi au suivant
-                if (imLord && game == null) { //on reconstruit le jeton
-                    TreeSet<String> allDevice = new TreeSet<String>(devices);
-                    allDevice.add(mService.getMacAddress());
-                    token = new InitToken(allDevice);
-                    token.setValid(true);
-                }else{
-                    token = initToken;
-                }
-
-                mService.send(nextDevice(), token);
-            }
-            return true;
-        }
-        return false;
     }
 
     private boolean checkReady() {
@@ -285,11 +296,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void play() {
+        //verification
         if (!mBinding.getOurTurn()) {
             return;
         }
         String answer = editText.getText().toString().toLowerCase().trim();
-        if (!isValidAnswer(answer)){
+        if (!isValidAnswer(answer)) {
             return;
         }
 
@@ -304,7 +316,7 @@ public class MainActivity extends AppCompatActivity {
             mBinding.setScore(mBinding.getScore() + 1);
             game.setWinner(mService.getMacAddress());
             refreshAnswersList();
-        }else{
+        } else {
             game.setHearth(game.getHearth() - 1);
         }
 
@@ -317,7 +329,6 @@ public class MainActivity extends AppCompatActivity {
         refreshAnswersList();
         GameToken token = new GameToken(game);
         mService.send(nextDevice(), token);
-
     }
 
     private void refreshAnswersList() {
@@ -343,7 +354,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_rescan) {
-            if (mService != null){
+            if (mService != null) {
                 mService.startDiscovery();
             }
             return true;

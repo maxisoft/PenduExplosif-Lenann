@@ -5,6 +5,9 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.TextView;
 
+/**
+ * from <a href=http://stackoverflow.com/a/11838715>stackoverflow</a>
+ */
 public abstract class TextValidator implements TextWatcher {
     private final TextView textView;
 
