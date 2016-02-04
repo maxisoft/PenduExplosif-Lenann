@@ -19,7 +19,7 @@ public class GameToken implements Serializable {
     }
 
 
-    @Nullable
+    @NonNull
     public Game getLastGameState() {
         return lastGameState;
     }

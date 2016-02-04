@@ -4,6 +4,7 @@
         <import type="android.view.View"/>
         <import type="java.util.Set"/>
         <import type="android.dristributed.penduexplosif.MainActivity"/>
+        <import type="android.dristributed.penduexplosif.model.Game"/>
         <variable
             name="devices"
             type="Set&lt;String>"/>
@@ -11,8 +12,23 @@
             name="ready"
             type="boolean"/>
         <variable
+            name="ourTurn"
+            type="boolean"/>
+        <variable
+            name="winner"
+            type="boolean"/>
+        <variable
+            name="looser"
+            type="boolean"/>
+        <variable
             name="handlers"
             type="MainActivity.Handlers"/>
+        <variable
+            name="game"
+            type="Game"/>
+        <variable
+            name="score"
+            type="int"/>
     </data>
     <android.support.design.widget.CoordinatorLayout
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -39,28 +55,221 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-            <TextView
+
+            <!-- WAITING 4 PEERS -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Recherche de pairs ..."
                 android:layout_gravity="center"
-                android:visibility='@{(devices.isEmpty()) ? View.VISIBLE : View.GONE, default=visible}'
-                android:layout_marginBottom="50dp" />
-            <ProgressBar
-                android:indeterminate="true"
-                android:id="@+id/marker_progress"
-                style="?android:attr/progressBarStyle"
-                android:layout_gravity="center"
+                android:visibility='@{(devices.isEmpty()) ? View.VISIBLE : View.GONE, default=gone}'
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Recherche de pairs ..."
+                    android:layout_gravity="center"
+                    />
+                <ProgressBar
+                    android:indeterminate="true"
+                    android:id="@+id/marker_progress"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:visibility='@{(devices.isEmpty()) ? View.VISIBLE : View.GONE, default=visible}' />
+                android:layout_height="match_parent"
+                android:visibility='@{(game != null) ? View.VISIBLE : View.GONE, default=visible}'
+                android:orientation="vertical"
+                android:paddingTop="70dp">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <LinearLayout
+                            android:orientation="horizontal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 1 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView2"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 2 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView3"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 3 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView4"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 4 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView5"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 5 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:orientation="horizontal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" >
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView6"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 6 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView7"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 7 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView8"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 8 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView9"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 9 ?  View.VISIBLE : View.GONE, default=visible}"/>
+
+                            <ImageView
+                                android:layout_width="25dp"
+                                android:layout_height="25dp"
+                                android:id="@+id/imageView10"
+                                android:src="@drawable/hearth"
+                                android:padding="3dp"
+                                android:visibility="@{game.hearth &gt;= 10 ?  View.VISIBLE : View.GONE, default=visible}"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:text='@{game.winner == null ? game.getWordHint() : game.word, default=test}'
+                        android:id="@+id/textView"
+                        android:layout_weight="1"
+                        android:layout_gravity="center" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:text="@{String.valueOf(score), default=0}"
+                        android:id="@+id/textView3"
+                        android:gravity="center_horizontal"
+                        android:layout_gravity="center"
+                        android:layout_weight="1" />
+                </LinearLayout>
+
+                <EditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/editText"
+                    android:inputType="text"
+                    android:enabled="@{ourTurn &amp;&amp; !looser}"
+                    android:layout_marginRight="20dp"
+                    android:layout_marginLeft="20dp"
+                    android:maxLength="1"
+                    android:visibility='@{(game.winner == null) ? View.VISIBLE : View.GONE, default=gone}'/>
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="10dp"
+                    android:background="#e4000000"
+                    android:visibility='@{(game.winner != null || game.getHearth() == 0 || looser) ? View.VISIBLE : View.GONE, default=gone}'>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:attr/textAppearanceLarge"
+                        android:text='@{winner ? "Manche gagnee !" : "Manche perdue :(\nLe mot etait " + game.word}'
+                        android:id="@+id/textView2"
+                        android:layout_gravity="center"
+                        android:textColor="@android:color/primary_text_dark" />
+
+                </FrameLayout>
+
+                <GridView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/gridView"
+                    android:visibility='@{(game.winner == null &amp;&amp; !looser) ? View.VISIBLE : View.GONE, default=gone}'
+                    android:numColumns="7"
+                    android:minWidth="12sp" />
+
+            </LinearLayout>
+
+            <!-- READY -->
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Ready ?"
+                android:text="Pret ?"
                 android:id="@+id/button"
+                android:height="150dp"
                 android:layout_gravity="center"
                 android:visibility='@{(!devices.isEmpty() &amp;&amp; !ready) ? View.VISIBLE : View.GONE, default=gone}'
+                android:onClick="@{handlers.onClickReady}"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Attente de validations"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:height="150dp"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:visibility='@{(!devices.isEmpty() &amp;&amp; ready &amp;&amp; game == null) ? View.VISIBLE : View.GONE, default=gone}'
                 android:onClick="@{handlers.onClickReady}"/>
         </FrameLayout>
 
@@ -70,7 +279,10 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="@dimen/fab_margin"
-            android:src="@android:drawable/ic_dialog_email" />
+            android:src="@android:drawable/ic_menu_send"
+            android:visibility='@{ourTurn ? View.VISIBLE : View.GONE, default=visible}'
+            android:enabled="@{game != null &amp;&amp; ourTurn}"
+            android:onClick="@{handlers.onClickFloatingActionButton}"/>
 
     </android.support.design.widget.CoordinatorLayout>
 </layout>

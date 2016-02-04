@@ -48,7 +48,7 @@ public class RoutingAlgo implements Visitor, Iterable<String> {
     public RoutingAlgo(@NonNull String localMacAddress) {
         this.localMacAddress = localMacAddress;
         scheduledThreadPool = Executors.newScheduledThreadPool(1);
-        sendExecutor = Executors.newFixedThreadPool(2);
+        sendExecutor = Executors.newFixedThreadPool(1);
 
         scheduledThreadPool.scheduleAtFixedRate(new PeriodicUpdateTable(), 1, 5, TimeUnit.SECONDS);
     }
